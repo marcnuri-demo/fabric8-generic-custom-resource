@@ -1,32 +1,30 @@
 package com.marcnuri.demo.kubernetesclient.genericcr;
 
+import io.fabric8.kubernetes.api.builder.BaseFluent;
 import io.fabric8.kubernetes.api.builder.VisitableBuilder;
-import io.fabric8.kubernetes.api.builder.Visitor;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 
 import java.util.HashMap;
 
-public class GenericResourceBuilder implements VisitableBuilder<GenericResource, GenericResourceBuilder> {
+public class GenericResourceBuilder extends BaseFluent<GenericResourceBuilder>
+  implements VisitableBuilder<GenericResource, GenericResourceBuilder> {
 
-  private GenericResource genericResource;
+  private final GenericResource genericResource;
+  private final ObjectMetaBuilder metadata;
 
   public GenericResourceBuilder(GenericResource item) {
     this.genericResource = new GenericResource();
     this.genericResource.setApiVersion(item.getApiVersion());
     this.genericResource.setKind(item.getKind());
     this.genericResource.setAdditionalProperties(new HashMap<>(item.getAdditionalProperties()));
-    this.genericResource.setMetadata(item.getMetadata() == null ?
-      new ObjectMeta() : new ObjectMetaBuilder(item.getMetadata()).build());
+    metadata = item.getMetadata() == null ? new ObjectMetaBuilder() : new ObjectMetaBuilder(item.getMetadata());
+    _visitables.get("metadata").add(this.metadata);
   }
 
   @Override
   public GenericResource build() {
+    genericResource.setMetadata(metadata.build());
     return genericResource;
   }
 
-  @Override
-  public GenericResourceBuilder accept(Visitor... visitors) {
-    return null;
-  }
 }

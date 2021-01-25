@@ -12,7 +12,6 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 // Required if using any of the ObjectMappers provided by KubernetesDeserializer (yamlMapper, jsonMapper)
 @JsonDeserialize(

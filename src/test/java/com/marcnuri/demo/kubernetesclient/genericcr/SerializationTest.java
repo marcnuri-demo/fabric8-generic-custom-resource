@@ -1,8 +1,8 @@
 package com.marcnuri.demo.kubernetesclient.genericcr;
 
+import io.fabric8.kubernetes.api.builder.TypedVisitor;
 import io.fabric8.kubernetes.api.model.KubernetesList;
 import io.fabric8.kubernetes.api.model.KubernetesListBuilder;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
 class SerializationTest {
 
@@ -51,6 +50,39 @@ class SerializationTest {
       "spec:\n" +
       "  field-1: \"val-1\"\n" +
       "  field-2: \"val-2\"\n"
+    );
+  }
+
+  @Test
+  void serializeRandomResourceInListWithVisitor() throws IOException {
+    // Given
+    final GenericResource gr = new GenericResource();
+    gr.setKind("Kind");
+    gr.setApiVersion("test.marcnuri.com/v1beta1");
+    gr.setMetadata(new ObjectMetaBuilder().withName("random-resource").build());
+    final KubernetesList kl = new KubernetesListBuilder()
+      .addToItems(gr)
+      .accept(new TypedVisitor<ObjectMetaBuilder>() {
+        @Override
+        public void visit(ObjectMetaBuilder element) {
+          element.addToAnnotations("test", "annotation");
+        }
+      })
+      .build();
+    // When
+    final String result = Serialization.yamlMapper().writeValueAsString(kl);
+    // Then
+    assertThat(result).isEqualTo(
+      "---\n" +
+        "apiVersion: \"v1\"\n" +
+        "kind: \"List\"\n" +
+        "items:\n" +
+        "- apiVersion: \"test.marcnuri.com/v1beta1\"\n" +
+        "  kind: \"Kind\"\n" +
+        "  metadata:\n" +
+        "    annotations:\n" +
+        "      test: \"annotation\"\n" +
+        "    name: \"random-resource\"\n"
     );
   }
 
