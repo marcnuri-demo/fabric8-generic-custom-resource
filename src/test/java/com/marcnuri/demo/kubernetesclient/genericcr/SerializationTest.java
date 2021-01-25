@@ -1,5 +1,7 @@
 package com.marcnuri.demo.kubernetesclient.genericcr;
 
+import io.fabric8.kubernetes.api.model.KubernetesList;
+import io.fabric8.kubernetes.api.model.KubernetesListBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.utils.Serialization;
@@ -40,7 +42,7 @@ class SerializationTest {
     ));
     // When
     final String result = Serialization.yamlMapper().writeValueAsString(input);
-    // THen
+    // Then
     assertThat(result).isEqualTo(
       "---\n" +
       "metadata:\n" +
@@ -49,6 +51,36 @@ class SerializationTest {
       "spec:\n" +
       "  field-1: \"val-1\"\n" +
       "  field-2: \"val-2\"\n"
+    );
+  }
+
+  @Test
+  void serializeRandomResourceInList() throws IOException {
+    // Given
+    final GenericResource gr = new GenericResource();
+    gr.setKind("Kind");
+    gr.setApiVersion("test.marcnuri.com/v1beta1");
+    gr.setMetadata(new ObjectMetaBuilder().withName("random-resource").build());
+    final KubernetesList kl = new KubernetesListBuilder()
+      .addNewPodItem().withNewMetadata().withName("test-pod").endMetadata().endPodItem()
+      .addToItems(gr)
+      .build();
+    // When
+    final String result = Serialization.yamlMapper().writeValueAsString(kl);
+    // Then
+    assertThat(result).isEqualTo(
+      "---\n" +
+      "apiVersion: \"v1\"\n" +
+      "kind: \"List\"\n" +
+      "items:\n" +
+      "- apiVersion: \"test.marcnuri.com/v1beta1\"\n" +
+      "  kind: \"Kind\"\n" +
+      "  metadata:\n" +
+      "    name: \"random-resource\"\n" +
+      "- apiVersion: \"v1\"\n" +
+      "  kind: \"Pod\"\n" +
+      "  metadata:\n" +
+      "    name: \"test-pod\"\n"
     );
   }
 }
